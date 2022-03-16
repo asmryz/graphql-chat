@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import "./style.css"
+import App from "./App";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "shards-ui/dist/css/shards.min.css"
 
-const App = () => <div>This is App Component</div>
+
 
 ReactDOM.render(<App />, document.getElementById("root"));

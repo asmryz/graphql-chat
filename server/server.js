@@ -1,4 +1,4 @@
-const {GraphQLServer} = require('graphql-yoga');
+const { GraphQLServer, PubSub } = require('graphql-yoga');
 
 const messages = [];
 
@@ -17,22 +17,35 @@ const typeDefs = `
         postMessage(user: String!, content: String!): ID!
     }
 
-`; 
+    type Subscription{
+        messagePosted: Message
+    }
+`;
 
 const resolvers = {
-    Query:{
+    Query: {
         messages: () => messages,
-    }, 
-    Mutation:{
-        postMessage:(parent, {user, content})=>{
+    },
+    Mutation: {
+        postMessage: (parent, { user, content }) => {
             const id = messages.length
-            messages.push({id, user, content});
+            messages.push({ id, user, content });
+
+            pubsub.publish('POST_MESSAGE', {
+                messagePosted: { id, user, content }
+            });
+
             return id;
+        },
+    },
+    Subscription: {
+        messagePosted: {
+            subscribe: (parent, args, { pubsub }) =>  pubsub.asyncIterator('POST_MESSAGE')
         }
     }
 }
+const pubsub = new PubSub()
+const server = new GraphQLServer({ typeDefs, resolvers, context: { pubsub } });
 
-const server = new GraphQLServer({typeDefs, resolvers});
-
-server.start(({port}) => console.log(`Server on http://localhost:${port}/`))
+server.start(({ port }) => console.log(`Server on http://localhost:${port}/`))
 
